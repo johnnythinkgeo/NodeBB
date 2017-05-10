@@ -7,9 +7,7 @@ var nconf = require('nconf');
 var padstart = require('lodash.padstart');
 
 var cacheBuster = require('./cacheBuster');
-var db = require('../database');
-var meta = require('../meta');
-var plugins = require('../plugins');
+var meta;
 
 function step(target, callback) {
 	var startTime = Date.now();
@@ -96,6 +94,10 @@ aliases = Object.keys(aliases).reduce(function (prev, key) {
 }, {});
 
 function beforeBuild(callback) {
+	var db = require('../database');
+	var plugins = require('../plugins');
+	meta = require('../meta');
+
 	async.series([
 		db.init,
 		meta.themes.setupPaths,
