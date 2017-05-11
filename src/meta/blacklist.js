@@ -7,9 +7,9 @@ var async = require('async');
 var db = require('../database');
 var pubsub = require('../pubsub');
 
-var Blacklist = {
-	_rules: [],
-};
+var Blacklist = module.exports;
+
+Blacklist._rules = [];
 
 Blacklist.load = function (callback) {
 	callback = callback || function () {};
@@ -130,5 +130,3 @@ Blacklist.validate = function (rules, callback) {
 		invalid: invalid,
 	});
 };
-
-module.exports = Blacklist;
