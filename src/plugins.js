@@ -8,10 +8,8 @@ var semver = require('semver');
 var express = require('express');
 var nconf = require('nconf');
 
-var db = require('./database');
 var hotswap = require('./hotswap');
 var file = require('./file');
-var languages = require('./languages');
 
 var app;
 var middleware;
@@ -21,6 +19,10 @@ var Plugins = module.exports;
 require('./plugins/install')(Plugins);
 require('./plugins/load')(Plugins);
 require('./plugins/hooks')(Plugins);
+Plugins.data = require('./plugins/data');
+
+Plugins.getPluginPaths = Plugins.data.getPluginPaths;
+Plugins.loadPluginInfo = Plugins.data.loadPluginInfo;
 
 Plugins.libraries = {};
 Plugins.loadedHooks = {};
@@ -31,7 +33,6 @@ Plugins.clientScripts = [];
 Plugins.acpScripts = [];
 Plugins.libraryPaths = [];
 Plugins.versionWarning = [];
-Plugins.languageCodes = [];
 Plugins.soundpacks = [];
 
 Plugins.initialized = false;
@@ -85,21 +86,7 @@ Plugins.reload = function (callback) {
 	Plugins.libraryPaths.length = 0;
 
 	async.waterfall([
-		function (next) {
-			// Build language code list
-			languages.list(function (err, languages) {
-				if (err) {
-					return next(err);
-				}
-
-				Plugins.languageCodes = languages.map(function (data) {
-					return data.code;
-				});
-
-				next();
-			});
-		},
-		async.apply(Plugins.getPluginPaths),
+		Plugins.data.getPluginPaths,
 		function (paths, next) {
 			async.eachSeries(paths, Plugins.loadPlugin, next);
 		},
@@ -151,21 +138,7 @@ Plugins.getTemplates = function (callback) {
 	var templates = {};
 	var tplName;
 
-	async.waterfall([
-		async.apply(db.getSortedSetRange, 'plugins:active', 0, -1),
-		function (plugins, next) {
-			var pluginBasePath = path.join(__dirname, '../node_modules');
-			var paths = plugins.map(function (plugin) {
-				return path.join(pluginBasePath, plugin);
-			});
-
-			// Filter out plugins with invalid paths
-			async.filter(paths, file.exists, next);
-		},
-		function (paths, next) {
-			async.map(paths, Plugins.loadPluginInfo, next);
-		},
-	], function (err, plugins) {
+	Plugins.data.getActive(function (err, plugins) {
 		if (err) {
 			return callback(err);
 		}
@@ -357,7 +330,7 @@ Plugins.showInstalled = function (callback) {
 			async.each(files, function (file, next) {
 				async.waterfall([
 					function (next) {
-						Plugins.loadPluginInfo(file, next);
+						Plugins.data.loadPluginInfo(file, next);
 					},
 					function (pluginData, next) {
 						Plugins.isActive(pluginData.name, function (err, active) {

@@ -11,14 +11,13 @@ var nconf = require('nconf');
 var plugins = require('../plugins');
 var file = require('../file');
 
-var Templates = {};
+var Templates = module.exports;
 
 Templates.compile = function (callback) {
 	callback = callback || function () {};
 
 	compile(callback);
 };
-
 
 function getBaseTemplates(theme) {
 	var baseTemplatesPaths = [];
@@ -173,5 +172,3 @@ function compile(callback) {
 		});
 	});
 }
-
-module.exports = Templates;

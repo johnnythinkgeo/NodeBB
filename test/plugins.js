@@ -1,6 +1,5 @@
 'use strict';
 
-
 var	assert = require('assert');
 var path = require('path');
 var nconf = require('nconf');
@@ -131,7 +130,7 @@ describe('Plugins', function () {
 			plugins.upgrade(pluginName, 'latest', function (err, isActive) {
 				assert.ifError(err);
 				assert(isActive);
-				plugins.loadPluginInfo(path.join(nconf.get('base_dir'), 'node_modules', pluginName), function (err, pluginInfo) {
+				plugins.data.loadPluginInfo(path.join(nconf.get('base_dir'), 'node_modules', pluginName), function (err, pluginInfo) {
 					assert.ifError(err);
 					assert.equal(pluginInfo.version, latest);
 					done();
