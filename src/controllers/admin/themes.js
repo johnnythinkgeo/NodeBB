@@ -14,10 +14,23 @@ themesController.get = function (req, res, next) {
 
 		var themeConfig = require(path.join(themeDir, 'theme.json'));
 		var screenshotPath = path.join(themeDir, themeConfig.screenshot);
-		if (themeConfig.screenshot && file.existsSync(screenshotPath)) {
-			res.sendFile(screenshotPath);
-		} else {
+
+		function sendDefault() {
 			res.sendFile(path.join(__dirname, '../../../public/images/themes/default.png'));
+		}
+
+		if (themeConfig.screenshot) {
+			file.exists(screenshotPath, function (err, exists) {
+				if (err) {
+					return next(err);
+				}
+				if (exists) {
+					return res.sendFile(screenshotPath);
+				}
+				sendDefault();
+			});
+		} else {
+			sendDefault();
 		}
 	});
 };
