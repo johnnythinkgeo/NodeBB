@@ -155,9 +155,16 @@ function resolveModulePath(basePath, modulePath, callback) {
 	var isNodeModule = /node_modules/;
 
 	var currentPath = path.join(basePath, modulePath);
-	file.exists(currentPath, function (exists) {
-		if (exists || !isNodeModule.test(modulePath)) {
+	file.exists(currentPath, function (err, exists) {
+		if (err) {
+			return callback(err);
+		}
+		if (exists) {
 			return callback(null, currentPath);
+		}
+		if (!isNodeModule.test(modulePath)) {
+			winston.warn('[plugins] File not found: ' + currentPath + ' (Ignoring)');
+			return callback();
 		}
 
 		var dirPath = path.dirname(basePath);
