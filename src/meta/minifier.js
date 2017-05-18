@@ -39,6 +39,8 @@ function setupDebugging() {
 
 var children = [];
 
+Minifier.maxThreads = os.cpus().length - 1;
+
 Minifier.killAll = function () {
 	children.forEach(function (child) {
 		child.kill('SIGTERM');
@@ -67,11 +69,13 @@ function forkAction(action, callback) {
 	proc.on('message', function (message) {
 		if (message.type === 'error') {
 			proc.kill();
+			removeChild(proc);
 			return callback(new Error(message.message));
 		}
 
 		if (message.type === 'end') {
 			proc.kill();
+			removeChild(proc);
 			callback(null, message.result);
 		}
 	});
@@ -84,10 +88,6 @@ function forkAction(action, callback) {
 	proc.send({
 		type: 'action',
 		action: action,
-	});
-
-	proc.on('close', function () {
-		removeChild(proc);
 	});
 }
 
@@ -124,7 +124,7 @@ if (process.env.minifier_child) {
 }
 
 function executeAction(action, fork, callback) {
-	if (fork) {
+	if (fork && children.length < Minifier.maxThreads) {
 		forkAction(action, callback);
 	} else {
 		if (typeof actions[action.act] !== 'function') {
